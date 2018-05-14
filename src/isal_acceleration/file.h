@@ -10,7 +10,7 @@ public:
     bool Open();
     bool Close();
 
-    void ReadAllBlocks();
+    void ReadAllBlocks(uint64_t windowSize = 1);
     void FreeAllBlocks();
 
     uint64_t GetNumBlocks();

@@ -15,10 +15,13 @@ bool File::Close()
     return close(mFileDescriptor) == 0;
 }
 
-void File::ReadAllBlocks()
+void File::ReadAllBlocks(uint64_t windowSize)
 {
     uint64_t fileSize = GetFileSize(mPath);
-    uint64_t numBlocks = fileSize / kBlockSize;
+    uint64_t numBlocksTotal = fileSize / kBlockSize;
+    ASSERT_OP(numBlocksTotal, >, 0);
+
+    uint64_t numBlocks = numBlocksTotal / windowSize * windowSize;
     ASSERT_OP(numBlocks, >, 0);
 
     for (uint64_t blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
