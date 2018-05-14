@@ -6,7 +6,7 @@ File::File(string path) :
 
 bool File::Open()
 {
-    int mFileDescriptor = open(mPath.c_str(), O_RDONLY, S_IRWXG);
+    mFileDescriptor = open(mPath.c_str(), O_RDONLY, S_IRWXG);
     return mFileDescriptor > 0;
 }
 
@@ -19,7 +19,7 @@ void File::ReadAllBlocks()
 {
     uint64_t fileSize = GetFileSize(mPath);
     uint64_t numBlocks = fileSize / kBlockSize;
-    ASSERT(numBlocks > 0);
+    ASSERT_OP(numBlocks, >, 0);
 
     for (uint64_t blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
     {
@@ -46,7 +46,10 @@ void File::ReadNextBlock(uint64_t blockSize)
     ASSERT(dataBuffer != NULL);
 
     ssize_t bytesRead = read(mFileDescriptor, (void*)dataBuffer, static_cast<size_t>(blockSize));
-    ASSERT(bytesRead == blockSize);
+    if (bytesRead != blockSize)
+    {
+        REPORT_ERR("Read failed");
+    }
 
     mBlocks.push(dataBuffer);
 }

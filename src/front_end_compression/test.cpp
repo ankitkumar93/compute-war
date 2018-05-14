@@ -1,26 +1,17 @@
 #include "shared.h"
 #include "threadpool.h"
 #include "file.h"
+#include "compress.h"
 
-enum CompressionAlgorithmType
+void CompressBlock(uint8_t* dataPtr, uint64_t blockIndex)
 {
-    LZO,
-    Snappy,
-    LZ4Fast,
-    LZ4
-};
-
-atomic<uint64_t> globalBlockCounter;
-
-void CompressBlock(uint8_t* dataPtr)
-{
-    globalBlockCounter++;
+    CompressBlockLZF(dataPtr, blockIndex);
+    // CompressBlockLZ4(dataPtr, blockIndex);
+    // CompressBlockLZ4Fast(dataPtr, blockIndex);
 }
 
 void RunCompression(string dataFile, uint32_t numThreads)
 {
-    globalBlockCounter = 0;
-
     File file(dataFile);
     ASSERT(file.Open());
 
@@ -29,19 +20,11 @@ void RunCompression(string dataFile, uint32_t numThreads)
 
     uint64_t numBlocks = file.GetNumBlocks();
 
-    // Create thread pool
-    ThreadPool threadPool(numThreads);
-
+    uint64_t blockIndex = 0;
     while(file.HasMoreBlocks())
     {
-        threadPool.Post(boost::bind(&CompressBlock, file.GetNextBlock()));
+        CompressBlock(file.GetNextBlock(), blockIndex++);
     }
-
-    // Wait for all blocks to be compressed
-    while (globalBlockCounter != numBlocks);
-
-    // Shutdown the thread pool
-    threadPool.Shutdown();
 
     // Free memory
     file.FreeAllBlocks();
@@ -51,7 +34,7 @@ void RunCompression(string dataFile, uint32_t numThreads)
 
 string ParseArgs(int argc, char* argv[])
 {
-    ASSERT(argc == 2);
+    ASSERT_OP(argc, ==, 2);
 
     return string(argv[1]);
 }
@@ -62,7 +45,4 @@ int main(int argc, char* argv[])
 
     // Single threaded compression
     RunCompression(dataFile, 1);
-
-    // Multi threaded compression
-    RunCompression(dataFile, kNumThreads);
 }

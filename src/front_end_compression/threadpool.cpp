@@ -2,7 +2,7 @@
 
 ThreadPool::ThreadPool(uint32_t numThreads)
 {
-    ASSERT(numThreads != 0);
+    ASSERT_OP(numThreads, !=, 0);
     mIsShutdown = false;
     for (uint32_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
     {
@@ -32,6 +32,7 @@ void ThreadPool::RunThread()
         }
     }
 
+    cout <<"Exiting thread." << endl;
     ASSERT(mIsShutdown);
 }
 
