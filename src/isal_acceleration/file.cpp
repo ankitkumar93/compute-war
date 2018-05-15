@@ -19,10 +19,12 @@ void File::ReadAllBlocks(uint64_t windowSize)
 {
     uint64_t fileSize = GetFileSize(mPath);
     uint64_t numBlocksTotal = fileSize / kBlockSize;
-    ASSERT_OP(numBlocksTotal, >, 0);
+    if(numBlocksTotal == 0)
+    {
+        return;
+    }
 
     uint64_t numBlocks = numBlocksTotal / windowSize * windowSize;
-    ASSERT_OP(numBlocks, >, 0);
 
     for (uint64_t blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
     {
