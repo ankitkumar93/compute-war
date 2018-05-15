@@ -71,6 +71,8 @@ bool File::HasMoreBlocks()
 
 uint8_t* File::GetNextBlock()
 {
+    ASSERT(!mBlocks.empty());
+
     uint8_t* block = mBlocks.front();
     mBlocks.pop();
 

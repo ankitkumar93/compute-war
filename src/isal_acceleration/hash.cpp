@@ -2,31 +2,34 @@
 
 #define LOG_SEPARATOR "|"
 
-// void HashBlockSkein256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
-// {
-//     // Allocate memory
-//     uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytes);
+void HashBlockSkein256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
+{
+    // Allocate memory
+    uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytes);
+    ASSERT(hashBuffer != NULL);
 
-//     auto startTime = chrono::high_resolution_clock::now();
-//     Skein_256_Ctxt_t ctx;
-//     Skein_256_Init(&ctx, kHashSizeBits);
-//     Skein_256_Update(&ctx, dataPtr, kBlockSize);
-//     Skein_256_Final(&ctx, hashBuffer);
-//     auto endTime = chrono::high_resolution_clock::now();
+    auto startTime = chrono::high_resolution_clock::now();
+    Skein_256_Ctxt_t ctx;
+    Skein_256_Init(&ctx, kHashSizeBits);
+    Skein_256_Update(&ctx, dataPtr, kBlockSize);
+    Skein_256_Final(&ctx, hashBuffer);
+    auto endTime = chrono::high_resolution_clock::now();
 
-//     uint64_t timeElapsedUS = chrono::duration_cast<chrono::microseconds>(endTime - startTime).count();
-//     cout << blockIndex << LOG_SEPARATOR
-//          << "Skein256" << LOG_SEPARATOR
-//          << timeElapsedUS << LOG_SEPARATOR
-//          << endl;
+    uint64_t timeElapsedUS = chrono::duration_cast<chrono::microseconds>(endTime - startTime).count();
+    cout << dataFile << LOG_SEPARATOR
+         << blockIndex << LOG_SEPARATOR
+         << "Skein256" << LOG_SEPARATOR
+         << timeElapsedUS << LOG_SEPARATOR
+         << endl;
 
-//     free(hashBuffer);
-// }
+    free(hashBuffer);
+}
 
 void HashBlockSHA256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
 {
     // Allocate memory
     uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytes);
+    ASSERT(hashBuffer != NULL);
 
     auto startTime = chrono::high_resolution_clock::now();
     SHA256(dataPtr, kBlockSize, hashBuffer);

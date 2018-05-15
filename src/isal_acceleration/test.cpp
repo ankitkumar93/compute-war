@@ -17,7 +17,9 @@ void RunHashingSB(string dataFile)
     uint64_t blockIndex = 0;
     while(file.HasMoreBlocks())
     {
-        HashBlockSHA256(file.GetNextBlock(), blockIndex++, dataFile);
+        uint8_t* block = file.GetNextBlock();
+        HashBlockSkein256(block, blockIndex++, dataFile);
+        HashBlockSHA256(block, blockIndex++, dataFile);
     }
 
     // Free memory

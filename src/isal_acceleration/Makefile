@@ -1,5 +1,5 @@
 all:	test.o file.o directory.o threadpool.o hash.o
-	g++ -o test test.o file.o directory.o threadpool.o hash.o -ltbb -lboost_thread -lboost_system -lboost_filesystem -lisal_crypto -lssl -lcrypto
+	g++ -o test test.o file.o directory.o threadpool.o hash.o -ltbb -lboost_thread -lboost_system -lboost_filesystem -lisal_crypto -lssl -lcrypto -L skein -lskein
 
 test.o: test.cpp
 	g++ -o test.o -c test.cpp --std=c++14 -O2 -march=native
