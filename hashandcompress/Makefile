@@ -30,16 +30,16 @@ TARFILE= $(PROG:%=%.tgz)
 
 CPPFLAGS += -std=c++11
 
-LDLIBS= -lboost_system -lboost_thread -lboost_program_options
+LDLIBS= -lboost_system -lboost_thread -lboost_program_options -lboost_timer
 
 $(PROG): $(OBJS)
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
 
 clean:
-	/usr/bin/rm -f $(OBJS)
+	/bin/rm -f $(OBJS)
 
 clobber: clean
-	/usr/bin/rm -f $(PROG) $(TARFILE)
+	/bin/rm -f $(PROG) $(TARFILE)
 
 dist: $(TARFILE)
 

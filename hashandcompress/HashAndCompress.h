@@ -21,5 +21,11 @@
 // How many threads should be in the compression worker pool?
 //
 #define DEFAULT_THREADS	8
-    
+
+//
+// What algorithms should we use?
+//
+#define DEFAULT_COMPRESSION_ALG "lz4"
+#define DEFAULT_HASHING_ALG "skein"
+
 #endif /* _HASHANDCOMPRESS_H_ */

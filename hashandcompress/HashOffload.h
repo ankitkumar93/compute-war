@@ -15,20 +15,19 @@ typedef enum {hInit, hQueued, hOffloaded, hComplete} HashOffloadState;
 class HashOffload
 {
 public:
-    HashOffload() : data(nullptr), results(nullptr), state(hInit) {};
+    HashOffload(int nBlocks) : offloadCount(nBlocks), data(nullptr), results(nullptr), state(hInit) {};
     
     void Enqueue()
     {
         assert(state == hInit);
-        // do the offload
         state = hQueued;
     };
 
     void Start()
     {
         assert(state == hQueued);
-        // do the offload
         state = hOffloaded;
+        // start the offload (xfer data, load kernel)
     };
 
     // May block on data availability and transfer
@@ -57,6 +56,7 @@ public:
     };
 
 private:
+    int offloadCount;
     char* data;
     char* results;
     HashOffloadState state;

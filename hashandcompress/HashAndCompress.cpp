@@ -12,9 +12,11 @@
 #include <utility>
 
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/program_options.hpp>
 #include <boost/range/irange.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/timer/timer.hpp>
 
 using namespace boost::program_options;
 
@@ -32,6 +34,18 @@ boost::mutex hashLock;
 bool allWorkFinished = false;
 std::queue<HashOffload*> hashQueue;
 boost::condition_variable hashCV;
+
+void fakeCompression(const char* src, char* dst, size_t len)
+{
+}
+
+boost::function<void(const char*, char*, size_t)> doCompression = boost::bind(&fakeCompression, _1, _2, _3);
+
+void fakeHash(const char* src, char* dst, size_t len)
+{
+}
+
+boost::function<void(const char*, char*, size_t)> doHash = boost::bind(&fakeHash, _1, _2, _3);
 
 void hashing_offload_entry_point()
 {
@@ -78,11 +92,11 @@ void ProcessFile(const std::string& f, int i, bool offload)
 
     // Buffers to hold input data, compressed data, and hashes
     // Neither compression nor hashing is actually verified
-    char rawData[readSize];
-    char compressedData[readSize];
-    char hashes[hashSize];
+    char* rawData = static_cast<char*>(malloc(readSize));
+    char* compressedData = static_cast<char*>(malloc(readSize));
+    char* hashes = static_cast<char*>(malloc(hashSize));
 
-    HashOffload h;
+    HashOffload h(blocksPerOffload);
     boost::mutex myOffloadLock;
     size_t bytesRead;
     
@@ -94,16 +108,23 @@ void ProcessFile(const std::string& f, int i, bool offload)
         return;
     }
 
-    // TODO: start per-file timer
+    boost::timer::auto_cpu_timer fTimer(f + " %s\n");
     
     while (!fs.eof())
     {
-        fs.read(&rawData[0], readSize);
+        fs.read(rawData, readSize);
 
         bytesRead = fs.gcount();
-        
-        if (bytesRead == 0)
+
+        // truncate the non-offloaded-block-size last reads
+        if (bytesRead != readSize)
         {
+            if (bytesRead > 0)
+            {
+                boost::unique_lock<boost::mutex> lock(ioLock);
+                std::cerr << "truncating partial read from end of " << f << std::endl;
+            }
+
             continue;
         }
 
@@ -118,9 +139,9 @@ void ProcessFile(const std::string& f, int i, bool offload)
             hashCV.notify_one();
         }
 
-        char* thisBlock = &rawData[0];
-        char* thisCompressed = &compressedData[0];
-        char* thisHash = &hashes[0];
+        char* thisBlock = rawData;
+        char* thisCompressed = compressedData;
+        char* thisHash = hashes;
 
         while (bytesRead > 0) 
         {
@@ -132,20 +153,14 @@ void ProcessFile(const std::string& f, int i, bool offload)
             
             if (!offload)
             {
-                // TODO: call single-block hash function to store hash of data from thisBlock into thisHash
-                
+                doHash(thisBlock, thisHash, thisBlockSize);
                 thisHash += sizeof (Hash);
             }
 
-            {
-                // TODO: call single-block compression function to compress data from thisBlock into
-                // thisCompressed. Limit size of output to blockSize.
-                //
-                // We're only interested in the time it takes to compress the data, not in the actual
-                // compression ratios or results.
-
-                thisCompressed += blockSize;
-            }
+            // We're only interested in the time it takes to compress the data,
+            // not in the actual compression ratios or results.
+            doCompression(thisBlock, thisCompressed, thisBlockSize);
+            thisCompressed += blockSize;
 
             if (bytesRead <= blockSize)
             {
@@ -163,7 +178,16 @@ void ProcessFile(const std::string& f, int i, bool offload)
         }
     }
 
-    // TODO: stop per-file timer and report
+    fTimer.stop();
+
+    {
+        boost::unique_lock<boost::mutex> reportLock(ioLock);
+        fTimer.report();
+    }
+    
+    free(rawData);
+    free(compressedData);
+    free(hashes);
 }
 
 void PopAndProcessFiles(int i, bool offload)
@@ -187,6 +211,22 @@ void PopAndProcessFiles(int i, bool offload)
     }
 }
 
+void usage(const char* n, const options_description& o, const char* msg = nullptr)
+{
+    int code = 0;
+    
+    if (msg != nullptr)
+    {
+        std::cerr << msg << std::endl;
+        code = 1;
+    }
+
+    std::cerr << "Usage: " << n << " [Options] [input-file]..." << std::endl << o << std::endl;
+
+    exit(code);
+}
+
+
 int main(int argc, const char* argv[])
 {
     int nCompressionThreads;
@@ -202,6 +242,8 @@ int main(int argc, const char* argv[])
             ("c-threads,c", value<int>()->default_value(DEFAULT_THREADS), "compression threads")
             ("gpu-offload,g", value<int>()->default_value(DEFAULT_OFFLOAD), "block count for each GPU offload")
             ("block-size,b", value<size_t>()->default_value(DEFAULT_BLOCK_SIZE), "bytes per block")
+            ("comp-alg,C", value<std::string>()->default_value(DEFAULT_COMPRESSION_ALG), "compression algorithm")
+            ("hash-alg,H", value<std::string>()->default_value(DEFAULT_HASHING_ALG), "hashing algorithm")
             ;
 
         options_description hidden{"Hidden options"};
@@ -219,15 +261,35 @@ int main(int argc, const char* argv[])
 
         if (vm.count("help"))
         {
-            std::cout << "Usage: " << argv[0] << " [Options] [input-file]..." << std::endl;
-            std::cout << desc << std::endl;
-            exit(0);
+            usage(argv[0], desc);
         }
 
         nCompressionThreads = vm["c-threads"].as<int>();
         blockSize = vm["block-size"].as<size_t>();
         blocksPerOffload = vm["gpu-offload"].as<int>();
         offloadHashing = (blocksPerOffload > 0);
+
+        if (vm["comp-alg"].as<std::string>() == "lzf")
+        {
+        }
+        else if (vm["comp-alg"].as<std::string>() == "lz4")
+        {
+        }
+        else
+        {
+            usage(argv[0], desc, "invalid compression algorithm specified; please use either \"lzf\" or \"lz4\"");
+        }
+
+        if (vm["hash-alg"].as<std::string>() == "skein")
+        {
+        }
+        else if (vm["hash-alg"].as<std::string>() == "sha256mb")
+        {
+        }
+        else
+        {
+            usage(argv[0], desc, "invalid hashing algorithm specified; please use either \"skein\" or \"sha256mb\"");
+        }
     }
     catch (const error& ex)
     {
@@ -256,25 +318,39 @@ int main(int argc, const char* argv[])
     }
 
     boost::thread_group workers;
+    boost::unique_lock<boost::mutex> startLock(fileLock);
+
+    for (int i : boost::irange(0, nCompressionThreads))
     {
-        boost::unique_lock<boost::mutex> lock(fileLock);
-
-        for (int i : boost::irange(0, nCompressionThreads))
-        {
-            workers.create_thread(boost::bind(&PopAndProcessFiles, i, offloadHashing));
-        }
-
-        // Wait for GPU initialization to complete; this is done with the fileLock held so that, on exit from
-        // this scope, we're ready to start the master timer.
-        initGpuThread.join();
+        workers.create_thread(boost::bind(&PopAndProcessFiles, i, offloadHashing));
     }
 
-    // TODO: start master timer
+    initGpuThread.join();
 
-    // Wait for all work to complete
-    workers.join_all();
+    {
+        // We don't need to hold the ioLock here because none of the worker threads has been released when we
+        // generate the summary line, and all of the worker threads have been joined before mTimer goes out of
+        // scope.
 
-    // TODO: stop master timer and report
+        std::cout << argv[0];
+        if (vm["comp-alg"].as<std::string>() == DEFAULT_COMPRESSION_ALG)
+        {
+            std::cout << " --comp-alg=" << DEFAULT_COMPRESSION_ALG;
+        }
+        if (vm["hash-alg"].as<std::string>() == DEFAULT_HASHING_ALG)
+        {
+            std::cout << " --hash-alg=" << DEFAULT_HASHING_ALG;
+        }
+        for (int a : boost::irange(1, argc))
+        {
+            std::cout << " " << argv[a];
+        }
+        std::cout << std::endl;
+        
+        boost::timer::auto_cpu_timer mTimer("total %s\n");
+        startLock.unlock();
+        workers.join_all();
+    }
 
     if (!offloadHashing)
     {
@@ -282,9 +358,11 @@ int main(int argc, const char* argv[])
     }
     
     // Clean up hashing offload thread
-    boost::unique_lock<boost::mutex> hLock(hashLock);
-    allWorkFinished = true;
-    hLock.unlock();
+    {
+        boost::unique_lock<boost::mutex> hLock(hashLock);
+        allWorkFinished = true;
+    }
+    
     hashCV.notify_one();
     offloadThread.join();
 }
