@@ -23,6 +23,7 @@
 #include <lzma.h>
 #include <zlib.h>
 #include "snappy.h"
+#include <isa-l/igzip_lib.h>
 
 using namespace std;
 void process_directory(const char*);
@@ -42,6 +43,7 @@ union {
         unsigned   snappy : 1;
         unsigned   verbose : 1;
         unsigned   best    : 1;
+        unsigned   isal    : 1;
     };
 } compress_flags;
 
@@ -413,6 +415,96 @@ void process_file(const char* fname)
             }
             compress_flags.best || cout << os.str();
         }
+
+        if (compress_flags.isal)
+        {
+            ostringstream os;
+            char verify[BLKSIZ];
+
+            // This can be used for all blocks
+            struct isal_zstream stream;
+            isal_deflate_init(&stream);
+            stream.end_of_stream = 1;
+            stream.flush = NO_FLUSH;
+            stream.next_in = (uint8_t*)inbuf;
+            stream.avail_in = BLKSIZ;
+
+            // Level 3
+            stream.level = 3;
+            stream.level_buf_size = ISAL_DEF_LVL3_DEFAULT;
+            stream.level_buf = (uint8_t*)malloc(stream.level_buf_size);
+            if (stream.level_buf == NULL)
+            {
+                cerr << "ISAL level buffer malloc failed" << endl;
+                abort();
+            }
+
+            compress_flags.verbose && cout << "Compressing DEFLATE(ISAL)" << endl;
+            gettimeofday( &tv1, nullptr);
+
+            size_t max_out_len = BLKSIZ*2;
+            csize = 0;
+            do
+            {
+                stream.avail_out = max_out_len;
+                stream.next_out = (uint8_t*)outbuf;
+
+                int rc = isal_deflate(&stream);
+                if (rc != COMP_OK)
+                {
+                    switch(rc)
+                    {
+                        case INVALID_FLUSH:
+                            cerr << "ISAL invalid flush" << endl;
+                            break;
+                        case ISAL_INVALID_LEVEL:
+                            cerr << "ISAL invalid compression level" << endl;
+                            break;
+                        case ISAL_INVALID_LEVEL_BUF:
+                            cerr << "ISAL level buffer is not large enough" << endl;
+                            break;
+                        default:
+                            cerr << "ISAL invalid return code" << endl;
+                            break;
+                    }
+                    abort();
+                }
+
+                csize += max_out_len - stream.avail_out;
+            } while(stream.avail_out == 0);
+
+            gettimeofday( &tv2, nullptr);
+            timersub( &tv2, &tv1, &tv3);
+
+            os << "isal" << "|" << csize << "|" << tv3.tv_usec << "|";
+
+            struct inflate_state state;
+            isal_inflate_init(&state);
+            state.avail_in = csize;
+            state.next_in = (uint8_t*)outbuf;
+            state.avail_out = BLKSIZ;
+            state.next_out = (uint8_t*)verify;
+
+            gettimeofday( &tv1, nullptr);
+            ret = isal_inflate(&state);
+            if (ret != 0)
+            {
+                cerr << "ISAL decompression failed" << endl;
+                abort();
+            }
+
+            gettimeofday( &tv2, nullptr);
+            timersub( &tv2, &tv1, &tv3);
+
+            os << tv3.tv_usec << "|" << fname << "|" << count << endl;
+            if (csize < best)
+            {
+                best = csize;
+                bname = os.str();
+            }
+            compress_flags.best || cout << os.str();
+        }
+
         compress_flags.best && cout << bname;
 
         count++;
@@ -457,11 +549,12 @@ int main(int argc, char** argv)
         {"lzo",     0, NULL, 'o'},
         {"lzma",    0, NULL, 'a'},
         {"snappy",  0, NULL, 's'},
+        {"isal",    0, NULL, 'i'},
         {"verbose", 0, NULL, 'v'},
         {NULL, 0, NULL, 0}
     };
 
-    while(-1 != (opt = getopt_long(argc, argv, "Bbg4foasv", myopts, &index)))
+    while(-1 != (opt = getopt_long(argc, argv, "Bbg4foasiv", myopts, &index)))
     {
         switch(opt)
         {
@@ -475,6 +568,7 @@ int main(int argc, char** argv)
                   compress_flags.lzo     = true; break;
         case 'a': compress_flags.lzma    = true; break;
         case 's': compress_flags.snappy  = true; break;
+        case 'i': compress_flags.isal    = true; break;
         case 'v': compress_flags.verbose = true; break;
         }
     }
