@@ -11,8 +11,10 @@ extern "C" {
 #include "skein/skein.h"
 }
 
-static constexpr int kHashSizeBytes = 32;
-static constexpr int kHashSizeBits = 256;
+static constexpr int kHashSizeBytesSHA = 32;
+static constexpr int kHashSizeBitsSHA = kHashSizeBytesSHA * 8;
+static constexpr int kHashSizeBytesSkein = 16;
+static constexpr int kHashSizeBitsSkein = kHashSizeBytesSkein * 8;
 
 void HashBlockSkein256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile);
 void HashBlockSHA256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile);

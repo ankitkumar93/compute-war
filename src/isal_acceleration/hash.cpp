@@ -5,12 +5,12 @@
 void HashBlockSkein256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
 {
     // Allocate memory
-    uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytes);
+    uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytesSkein);
     ASSERT(hashBuffer != NULL);
 
     auto startTime = chrono::high_resolution_clock::now();
     Skein_256_Ctxt_t ctx;
-    Skein_256_Init(&ctx, kHashSizeBits);
+    Skein_256_Init(&ctx, kHashSizeBitsSkein);
     Skein_256_Update(&ctx, dataPtr, kBlockSize);
     Skein_256_Final(&ctx, hashBuffer);
     auto endTime = chrono::high_resolution_clock::now();
@@ -28,7 +28,7 @@ void HashBlockSkein256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
 void HashBlockSHA256(uint8_t* dataPtr, uint64_t blockIndex, string dataFile)
 {
     // Allocate memory
-    uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytes);
+    uint8_t* hashBuffer = (uint8_t*)malloc(kHashSizeBytesSHA);
     ASSERT(hashBuffer != NULL);
 
     auto startTime = chrono::high_resolution_clock::now();
