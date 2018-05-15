@@ -3,7 +3,7 @@
 #include "file.h"
 #include "hash.h"
 
-void RunHashingSHA256(string dataFile)
+void RunHashingSB(string dataFile)
 {
     File file(dataFile);
     ASSERT(file.Open());
@@ -25,29 +25,7 @@ void RunHashingSHA256(string dataFile)
     ASSERT(file.Close());
 }
 
-void RunHashingMD5(string dataFile)
-{
-    File file(dataFile);
-    ASSERT(file.Open());
-
-    // Read all blocks into memory
-    file.ReadAllBlocks();
-
-    uint64_t numBlocks = file.GetNumBlocks();
-
-    uint64_t blockIndex = 0;
-    while(file.HasMoreBlocks())
-    {
-        HashBlockMD5(file.GetNextBlock(), blockIndex++);
-    }
-
-    // Free memory
-    file.FreeAllBlocks();
-
-    ASSERT(file.Close());
-}
-
-void RunHashingSHA256MB(string dataFile, uint64_t windowSize)
+void RunHashingMB(string dataFile, uint64_t windowSize)
 {
     File file(dataFile);
     ASSERT(file.Open());
@@ -56,33 +34,26 @@ void RunHashingSHA256MB(string dataFile, uint64_t windowSize)
     file.ReadAllBlocks(windowSize);
 
     uint64_t numBlocks = file.GetNumBlocks();
+    uint64_t numWindows = numBlocks / windowSize;
 
-    uint64_t windowIndex = 0;
-    while(file.HasMoreBlocks())
+    for(uint64_t windowIndex = 0; windowIndex < numWindows; ++windowIndex)
     {
-        HashBlockSHA256MB(file.GetNextBlock(), windowIndex++, windowSize);
-    }
+        // Form window
+        uint64_t bufferSize = kBlockSize * windowSize;
+        uint8_t* dataPtr = (uint8_t*)malloc(bufferSize);
+        ASSERT(dataPtr != NULL);
 
-    // Free memory
-    file.FreeAllBlocks();
+        for(uint64_t offset = 0; offset < bufferSize; offset += kBlockSize)
+        {
+            uint8_t* block = file.GetNextBlock();
+            memcpy(dataPtr + offset, block, kBlockSize);
+        }
 
-    ASSERT(file.Close());
-}
+        // SHA256
+        HashBlockSHA256MB(dataPtr, windowIndex, windowSize);
 
-void RunHashingMD5MB(string dataFile, uint64_t windowSize)
-{
-    File file(dataFile);
-    ASSERT(file.Open());
-
-    // Read all blocks into memory
-    file.ReadAllBlocks(windowSize);
-
-    uint64_t numBlocks = file.GetNumBlocks();
-
-    uint64_t windowIndex = 0;
-    while(file.HasMoreBlocks())
-    {
-        HashBlockMD5MB(file.GetNextBlock(), windowIndex++, windowSize);
+        // Free
+        free(dataPtr);
     }
 
     // Free memory
@@ -101,13 +72,11 @@ string ParseArgs(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
     string dataFile = ParseArgs(argc, argv);
-    RunHashingSHA256(dataFile);
-    RunHashingMD5(dataFile);
+    RunHashingSB(dataFile);
 
     // Run MB hashing with different window size
     for (uint64_t windowSize = 1; windowSize <= 4; windowSize++)
     {
-        RunHashingSHA256MB(dataFile, windowSize);
-        RunHashingMD5MB(dataFile, windowSize);
+        RunHashingMB(dataFile, windowSize);
     }
 }
