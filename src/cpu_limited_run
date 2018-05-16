@@ -1,0 +1,3 @@
+#!/bin/bash
+
+taskset --cpu-list 8 ./run_all

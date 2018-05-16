@@ -1,0 +1,34 @@
+#!/bin/bash
+
+if [[ "$#" -ne 3 ]];
+then
+    echo "Invalid number of params!"
+    echo "Usage: test <log_dir> <dataset_dir> <iterations>"
+    exit
+fi
+
+MY_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+LOG_FILE_PREFIX="hash_perf"
+LOG_DIR=$1
+DATASET_DIR=$2
+ITERATIONS=$3
+
+_run_iteration()
+{
+    ITERATION=$1
+    LOG_FILE=$LOG_DIR/$LOG_FILE_PREFIX.$ITERATION
+    $MY_DIR/test $DATASET_DIR > $LOG_FILE
+}
+
+
+echo "Hashing Perf: Begin" $LOG_DIR $ITERATIONS
+COUNTER=1
+while [[ $COUNTER -le $ITERATIONS ]];
+do
+    echo "Hashing Perf: Iteration: $COUNTER"
+    _run_iteration $COUNTER
+    ((COUNTER++))
+done
+
+echo "Hashing Perf: Done"
