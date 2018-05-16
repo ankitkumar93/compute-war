@@ -6,16 +6,20 @@
 #define _HASHANDCOMPRESS_H_
 
 //
-// Why is this even tweakable? Don't mess with it.
+// An offload value of false indicates that each worker thread should do its own hashing inline with
+// compression. A value of true indicates that hashing should be handed off to a separate thread.
 //
-#define DEFAULT_BLOCK_SIZE 4096
+#define DEFAULT_OFFLOAD	false
 
 //
-// An offload value of 0 indicates that each worker thread should do one-block-at-a-time hashing inline with
-// compression. A value greater than 0 indicates a count for how many hashes at a time should be handed off to
-// the bulk hashing routine.
+// How many blocks should we hash at once?
 //
-#define DEFAULT_OFFLOAD	0
+#define DEFAULT_HASH_BLOCKS 1
+
+//
+// How many blocks should we read at a time?
+//
+#define DEFAULT_BLOCKS_PER_READ 8
 
 //
 // How many threads should be in the compression worker pool?

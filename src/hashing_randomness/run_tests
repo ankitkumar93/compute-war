@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ "$#" -ne 2 ]];
+then
+    echo "Invalid number of params!"
+    echo "Usage: test <log_dir> <dataset_dir>"
+    exit
+fi
+
+MY_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+LOG_FILE_PREFIX="hash_random"
+LOG_DIR=$1
+DATASET_DIR=$2
+
+echo "Hashing Randomness: Begin"
+LOG_FILE=$LOG_DIR/$LOG_FILE_PREFIX
+$MY_DIR/test $DATASET_DIR > $LOG_FILE
+echo "Hashing Randomness: Done"

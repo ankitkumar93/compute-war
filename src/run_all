@@ -1,0 +1,10 @@
+#!/bin/bash
+
+LOG_DIR="../results/"
+DATASET_DIR="../dataset/"
+ITERATIONS=10
+
+# Run all tests
+compression_perf/run_tests $LOG_DIR $DATASET_DIR $ITERATIONS
+hashing_perf/run_tests $LOG_DIR $DATASET_DIR $ITERATIONS
+hashing_randomness/run_tests $LOG_DIR $DATASET_DIR
