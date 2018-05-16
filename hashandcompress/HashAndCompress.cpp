@@ -213,7 +213,6 @@ void ProcessFile(const std::string& f, int i, bool offload)
         return;
     }
 
-    auto startTime = chrono::high_resolution_clock::now();
     int blocksProcessed = 0;
     
     while (!fs.eof())
@@ -232,6 +231,7 @@ void ProcessFile(const std::string& f, int i, bool offload)
 
         while (bytesRead > 0) 
         {
+            auto startTime = chrono::high_resolution_clock::now();
             size_t thisBlockSize = std::min(bytesRead, blockSize);
             bool waitForOffload = false;
 
@@ -267,6 +267,8 @@ void ProcessFile(const std::string& f, int i, bool offload)
             }
 
             blocksProcessed++;
+            auto endTime = chrono::high_resolution_clock::now();
+            tp.Track(readBlockFactor, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count());
 
             if (bytesRead <= blockSize)
             {
@@ -279,13 +281,11 @@ void ProcessFile(const std::string& f, int i, bool offload)
         }
     }
 
-    auto endTime = chrono::high_resolution_clock::now();
     
     free(rawData);
     free(compressedData);
     free(hashData);
 
-    uint64_t timeElapsedUS = chrono::duration_cast<chrono::microseconds>(endTime - startTime).count();
     if (blocksProcessed == 0)
     {
         boost::unique_lock<boost::mutex> reportLock(ioLock);
@@ -293,7 +293,6 @@ void ProcessFile(const std::string& f, int i, bool offload)
         return;
     }
 
-    tp.Track(blocksProcessed, timeElapsedUS);
     totalTp.Track(tp);
 
     boost::unique_lock<boost::mutex> reportLock(ioLock);
