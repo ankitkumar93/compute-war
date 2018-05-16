@@ -69,7 +69,7 @@ while (!((var1_) op_ (var2_)))          \
     exit(EXIT_FAILURE);                                                 \
 }                                                                       \
 
-#define PANIC_BAD_VALUE(val_)      \
+#define PANIC_BAD_VALUE(val_)           \
 {                                       \
     cerr << "Bad value: "               \
          << #val_                       \
