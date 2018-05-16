@@ -148,10 +148,8 @@ void doSHA256MBHashing(const char* src, char* dst, int count)
      SHA256_HASH_CTX* ctx;
     while ((ctx = sha256_ctx_mgr_flush(mgr)) != NULL)
     {
-        --count;
         // No, really, how do I retrieve the hash value?
     }
-    assert(count == 0);
 
     free(mgr);
 }

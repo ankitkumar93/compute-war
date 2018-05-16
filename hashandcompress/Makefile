@@ -34,12 +34,12 @@ CPPFLAGS += -std=c++11
 LDLIBS= -lboost_system -lboost_thread -lboost_program_options -lboost_timer
 
 # compression libraries
-CPPFLAGS += -I../include
-LDLIBS += -L../lib -llz4 -llzf
+CPPFLAGS += -I../src/compression_perf/include
+LDLIBS += -L../src/compression_perf/lib -llz4 -llzf
 
 # Skein hashing library
-CPPFLAGS += -I../src/isal_acceleration
-LDLIBS += -L../src/isal_acceleration/skein -l skein
+CPPFLAGS += -I../src/hashing_perf
+LDLIBS += -L../src/hashing_perf/skein -l skein
 
 # isa-l crypto library
 CPPFLAGS += -I../../isa-l_crypto/include
