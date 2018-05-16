@@ -229,9 +229,10 @@ void ProcessFile(const std::string& f, int i, bool offload)
         char* thisBlock = rawData;
         char* thisCompressed = compressedData;
 
+        auto startTime = chrono::high_resolution_clock::now();
+
         while (bytesRead > 0) 
         {
-            auto startTime = chrono::high_resolution_clock::now();
             size_t thisBlockSize = std::min(bytesRead, blockSize);
             bool waitForOffload = false;
 
@@ -267,8 +268,6 @@ void ProcessFile(const std::string& f, int i, bool offload)
             }
 
             blocksProcessed++;
-            auto endTime = chrono::high_resolution_clock::now();
-            tp.Track(readBlockFactor, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count());
 
             if (bytesRead <= blockSize)
             {
@@ -279,6 +278,9 @@ void ProcessFile(const std::string& f, int i, bool offload)
             thisCompressed += 2 * blockSize;
             bytesRead -= blockSize;
         }
+
+        auto endTime = chrono::high_resolution_clock::now();
+        tp.Track(readBlockFactor, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count());
     }
 
     
