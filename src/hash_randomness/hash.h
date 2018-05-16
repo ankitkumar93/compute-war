@@ -15,6 +15,8 @@ static constexpr int kHashSizeBytesSHA = 32;
 static constexpr int kHashSizeBitsSHA = kHashSizeBytesSHA * 8;
 static constexpr int kHashSizeBytesSkein = 16;
 static constexpr int kHashSizeBitsSkein = kHashSizeBytesSkein * 8;
+static constexpr int kHashSizeBytesMD5 = 16;
+static constexpr int kHashSizeBitsMD5 = kHashSizeBytesMD5 * 8;
 
 class Hasher
 {
@@ -37,12 +39,18 @@ private:
         Skein_256_Final(&ctx, hashBuffer);
     }
 
+    void HashBlockMD5(uint8_t* dataPtr, uint8_t* hashBuffer)
+    {
+        MD5(dataPtr, kBlockSize, hashBuffer);
+    }
+
     void LogResultsInternal(queue<uint8_t*>& hashes, string alg);
     double LogByteResults(size_t byte, const std::map<uint8_t, size_t>& distributionMap, string alg);
 
 private:
     queue<uint8_t*> mSHA256Hashes;
     queue<uint8_t*> mSkeinHashes;
+    queue<uint8_t*> mMD5Hashes;
 };
 
 #endif // __HASH_H__

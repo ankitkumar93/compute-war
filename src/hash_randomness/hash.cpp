@@ -13,12 +13,18 @@ void Hasher::HashBlock(uint8_t* dataPtr)
     ASSERT(skeinHashBuffer != NULL);
     HashBlockSkein256(dataPtr, skeinHashBuffer);
     mSkeinHashes.push(skeinHashBuffer);
+
+    uint8_t* md5HashBuffer = (uint8_t*)malloc(kHashSizeBytesMD5);
+    ASSERT(md5HashBuffer != NULL);
+    HashBlockMD5(dataPtr, md5HashBuffer);
+    mMD5Hashes.push(md5HashBuffer);
 }
 
 void Hasher::LogResults()
 {
     LogResultsInternal(mSHA256Hashes, "SHA256");
     LogResultsInternal(mSkeinHashes, "Skein256");
+    LogResultsInternal(mMD5Hashes, "MD5");
 }
 
 void Hasher::LogResultsInternal(queue<uint8_t*>& hashes, string alg)
