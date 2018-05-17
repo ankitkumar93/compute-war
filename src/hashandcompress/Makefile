@@ -41,7 +41,7 @@ LDLIBS += -L ../compression_perf/lib -llz4 -llzf
 CPPFLAGS += -I../hashing_perf
 LDLIBS += -L../hashing_perf/skein -l skein
 
-LDLIBS += -lssl -lcrypto -lisal_crypto
+LDLIBS += -lssl -lcrypto -lisal_crypto -ltbb
 
 $(PROG): $(OBJS)
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
