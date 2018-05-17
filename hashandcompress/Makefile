@@ -30,7 +30,20 @@ TARFILE= $(PROG:%=%.tgz)
 
 CPPFLAGS += -std=c++11
 
+# Boost libraries
 LDLIBS= -lboost_system -lboost_thread -lboost_program_options -lboost_timer
+
+# compression libraries
+CPPFLAGS += -I../src/compression_perf/include
+LDLIBS += -L../src/compression_perf/lib -llz4 -llzf
+
+# Skein hashing library
+CPPFLAGS += -I../src/hashing_perf
+LDLIBS += -L../src/hashing_perf/skein -l skein
+
+# isa-l crypto library
+CPPFLAGS += -I../../isa-l_crypto/include
+LDLIBS += -lssl -lcrypto -L../../isa-l_crypto/bin -lisal_crypto
 
 $(PROG): $(OBJS)
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
