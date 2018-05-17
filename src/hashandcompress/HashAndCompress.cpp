@@ -220,7 +220,6 @@ void ProcessFile(const std::string& f, int i, bool offload)
         // truncate partial last reads; 
         if ((bytesRead = fs.gcount()) != readSize)
         {
-            assert(fs.eof());
             break;
         }
 
