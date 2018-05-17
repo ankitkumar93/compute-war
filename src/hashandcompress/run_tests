@@ -1,0 +1,35 @@
+#!/bin/bash
+
+ITERATIONS=10
+LOG_DIR="../../results"
+LOG_FILE_PREFIX="$LOG_DIR/hc"
+
+echo "HC: Start"
+COUNTER=1
+while [[ $COUNTER -le $ITERATIONS ]];
+do
+	echo "HC: Iteration: $COUNTER"
+
+	# Skein-LZF
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26,27,28,29,30 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=14 --read-blocks=1 --hash-alg=skein --comp-alg=lzf > $LOG_FILE_PREFIX"_sklzf".$COUNTER
+
+	# Skein-LZ4
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26,27,28,29,30 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=14 --read-blocks=1 --hash-alg=skein --comp-alg=lz4 > $LOG_FILE_PREFIX"_sklz4".$COUNTER
+
+	# SHA256-LZF
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26,27,28,29,30 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=14 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lzf > $LOG_FILE_PREFIX"_shlzf".$COUNTER
+
+	# SHA256-LZ4
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26,27,28,29,30 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=14 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 > $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26,27,28 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=12 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18,19,20,21,22,23,24,25,26 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=10 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18,19,20,21,22,23,24 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=8 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18,19,20,21,22 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=6 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18,19,20 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=4 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17,18 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=2 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	taskset --cpu-list 17 ./hashAndCompress $(find ../../dataset/ -type f) --c-threads=1 --read-blocks=8 --hash-alg=sha256mb --comp-alg=lz4 >> $LOG_FILE_PREFIX"_shlz4".$COUNTER
+	
+	((COUNTER++))
+done
+echo "HC: Done"
+
