@@ -121,14 +121,16 @@ boost::function<void(const char*, char*, int)> doHashing = boost::bind(&fakeHash
 void doSkeinHashing(const char* src, char* dst, int count)
 {
     Skein_256_Ctxt_t ctx;
-    
+
     for (int i : boost::irange(0, count))
     {
+        printf("src: %p, i: %d\n", src, i);
         Skein_256_Init(&ctx, kHashSizeBitsSkein);
         Skein_256_Update(&ctx, (uint8_t*)src, blockSize);
         Skein_256_Final(&ctx, (uint8_t*)dst);
 
         src += blockSize;
+        dst += kHashSizeBytesSkein;
     }
 }
 
@@ -207,8 +209,10 @@ void ReadFile(string file)
         {
             break;
         }
-
-        dataBlocksQueue.push(string(rawData));
+        else
+        {
+            dataBlocksQueue.push(string(rawData));
+        }
     }
 
     free(rawData);
@@ -259,10 +263,6 @@ void ProcessBlock(const std::string& data)
 
 void PopAndProcessBlocks()
 {
-    // Lazy, perhaps, but the file vector is completely initialized prior to spawning the worker threads, so
-    // we need only wait on an empty vector. There's no vector-filling thread, so no call for synchronization
-    // therewith.
-
     string dataBlock;
     while (dataBlocksQueue.try_pop(dataBlock))
     {
@@ -403,6 +403,7 @@ int main(int argc, const char* argv[])
     }
     workers.join_all();
     auto endTime = chrono::high_resolution_clock::now();
+
     uint64_t totalTimeMS = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
     uint64_t throughputMBPS = (totalDataSize * 1000) / (totalTimeMS * 1024 * 1024);
 
