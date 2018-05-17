@@ -32,4 +32,6 @@
 #define DEFAULT_COMPRESSION_ALG "lz4"
 #define DEFAULT_HASHING_ALG "skein"
 
+#define LOG_SEPARATOR "|"
+
 #endif /* _HASHANDCOMPRESS_H_ */
