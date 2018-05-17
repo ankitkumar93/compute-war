@@ -583,6 +583,7 @@ int main(int argc, char** argv)
         cout << "LZO:    " << compress_flags.lzo << endl;
         cout << "LZMA:   " << compress_flags.lzma << endl;
         cout << "Snappy: " << compress_flags.lzma << endl;
+        cout << "ISAL    " << compress_flags.isal << endl;
         cout << "Verbose:" << compress_flags.verbose << endl;
     }
 
