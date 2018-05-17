@@ -124,7 +124,6 @@ void doSkeinHashing(const char* src, char* dst, int count)
 
     for (int i : boost::irange(0, count))
     {
-        printf("src: %p, i: %d\n", src, i);
         Skein_256_Init(&ctx, kHashSizeBitsSkein);
         Skein_256_Update(&ctx, (uint8_t*)src, blockSize);
         Skein_256_Final(&ctx, (uint8_t*)dst);
