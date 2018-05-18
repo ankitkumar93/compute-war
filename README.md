@@ -2,13 +2,13 @@
 Save $$$ on CPUs
 
 ## Project Goals ##
- - [ ] SKEIN hash on GPU(s) using CUDA<br/>
- - [ ] LZ4 vs LZF for front end compression<br/>
- - [ ] Different algorithms for different types of data for background recompression<br/>
- - [ ] Performance statistics<br/>
- - [ ] Performance statistics with limited CPU(s)<br/>
- - [ ] Cost savings analysis<br/>
- - [ ] Design the presentation
+ - [x] SKEIN hash on GPU(s) using CUDA<br/>
+ - [x] LZ4 vs LZF for front end compression<br/>
+ - [x] Different algorithms for different types of data for background recompression<br/>
+ - [x] Performance statistics<br/>
+ - [x] Performance statistics with limited CPU(s)<br/>
+ - [x] Cost savings analysis<br/>
+ - [x] Design the presentation
 
 ## Team ##
 * Mark Olson
